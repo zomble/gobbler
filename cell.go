@@ -1,18 +1,12 @@
 package main
 
-type Cell struct {
-	x	int
-	y	int
-	Fg Attr // Foreground colour
-	Bg Attr // Background color
-	Ch rune // The character to draw
-	content *Snake
+type Placer interface {
+	glyph() rune // ???
 }
 
-func (c *Cell) glyph() rune {
-	if c.content == nil {
-		return ' '
-	}
-	
-	return '*'
+type Cell struct {
+	Fg uint16 // Foreground colour
+	Bg uint16 // Background color
+	Ch rune // The character to draw
+	s  interface{}
 }

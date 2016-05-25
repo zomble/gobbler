@@ -19,16 +19,10 @@ func newView(g *Grid) *View {
 	return &view
 }
 
-func (view *View) tick(event Event) {
-//	if ev.Type != EventNone {
-//		for _, e := range s.Entities {
-//			e.Tick(ev)
-//		}
-//	}
-}
-
-// Draw is called every frame by the Game to render the current
+// Draw is called every frame by the game to render the current grid.
 func (view *View) draw() {
+	termbox.Clear(termbox.ColorBlue, termbox.ColorYellow)
+
 //	view.futureFrame = newFrame(view.width, view.height)
 //
 //	for _, cell := range view.grid {
@@ -40,10 +34,19 @@ func (view *View) draw() {
 		// Draw to terminal
 		for i, col := range view.grid.cells {
 			for j, cell := range col {
+
+				var glyph rune
+
+				switch cell.s.(type) {
+				default:
+				case Placer:
+					glyph = cell.s.(Placer).glyph()
+				}
+
 				termbox.SetCell(
 					i,
 					j,
-					cell.glyph(),
+					glyph,
 					termbox.Attribute(cell.Fg),
 					termbox.Attribute(cell.Bg),
 				)

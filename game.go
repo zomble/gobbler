@@ -1,86 +1,63 @@
 package main
 
 import (
-	"fmt"
-	"github.com/nsf/termbox-go"
 	"time"
+	"fmt"
 )
 
 type Game struct {
-	view		*View
 	snakeHead	*Snake
-	input		*Input
 	grid		*Grid
+	moveTimer   *time.Timer
 }
 
-func newGame(snake *Snake) *Game {
-
-	grid := newGrid(10, 10)
-
-	game := Game{
+func newGame(grid *Grid, snake *Snake) *Game {
+	g := Game{
 		snakeHead:	snake,
-		view:	newView(grid),
-		input:	newInput(),
-		grid:	grid,
+		grid: grid,
+		moveTimer: time.NewTimer(time.Duration(time.Second)),
 	}
 
-	return &game
+	g.moveTimer.Stop()
+
+	return &g
 }
 
-func (game *Game) tick(event Event) {
+func (g *Game) move() {
+	// reset the timer
+	g.resetMoveTimer()
+
+	x, y := g.snakeHead.Position();
+
+	// leave the body behind
+	body := newSnake()
+	body.state = snakeBody
+	body.decay = g.snakeHead.decay
+	body.SetPosition(x, y)
+	g.grid.Cell(x, y).s = body
+
 	// ???
-}
+	xNew, yNew := g.grid.PositionAdjacent(x, y, g.snakeHead.direction)
+	nextCell := g.grid.Cell(xNew, yNew)
 
-func (game *Game) start() {
-
-	err := termbox.Init()
-//
-//	termbox.SetOutputMode(termbox.Output256)
-//	termbox.SetInputMode(termbox.InputAlt | termbox.InputMouse)
-
-	if err != nil {
-		panic(err)
+	if (nextCell == nil) {
+		fmt.Println("WTF")
 	}
 
-	defer termbox.Close()
+//	switch nextCell.(type) {
+//	case nil:
+		g.snakeHead.SetPosition(xNew, yNew)
+		nextCell.s = g.snakeHead
+//	default:
+//		fmt.Println("WTF")
+//	}
+}
 
-//	game.screen.resize(termbox.Size())
+func (g *Game) start() {
+	// start the timers and shit
+	g.resetMoveTimer()
+}
 
-	game.grid.getCenterCell().content = game.snakeHead
-
-	game.input.start()
-	defer game.input.stop()
-
-	clock := time.Now()
-
-	loop:
-		for {
-			tickTime := time.Now()
-			game.view.delta = tickTime.Sub(clock).Seconds()
-			clock = tickTime
-
-			select {
-				case event := <- game.input.queue:
-					if event.Key == game.input.endKey {
-						break loop
-					} else if EventType(event.Type) == EventResize {
-//						game.screen.resize(ev.Width, ev.Height)
-					} else if EventType(event.Type) == EventError {
-//						game.log(event.Err.Error())
-						panic(event.Err)
-					}
-					game.view.tick(convertEvent(event))
-
-					fmt.Printf("%+v\n", event)
-
-				default:
-					game.view.tick(Event{Type: EventNone})
-
-					fmt.Println("nothing")
-			}
-
-			game.view.draw()
-
-			time.Sleep(time.Duration((tickTime.Sub(time.Now()).Seconds()*1000.0)+1000.0/game.view.fps) * time.Millisecond)
-		}
+func (g *Game) resetMoveTimer() {
+	g.moveTimer.Reset(time.Duration(time.Second))
 }
